@@ -1,0 +1,2 @@
+Project Overview
+This project focuses on analyzing credit risk by examining applicant demographics, loan characteristics, and default behavior. The objective is to identify patterns in loan performance, highlight risk drivers, and provide actionable insights for lenders to improve portfolio quality. The analysis leverages SQL for data extraction, Excel for modeling, and visualization tools like Power BI and Looker Studio for dashboard storytelling.
