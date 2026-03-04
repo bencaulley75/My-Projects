@@ -12,7 +12,7 @@ from cleaner import (
 
 st.set_page_config(page_title="Automated Data Analysis", layout="wide")
 
-st.title("📊 Automated Data Analysis")
+st.title("📊 Automated Data Analysis v1")
 st.write("Upload any CSV file and generate automatic cleaning insights and KPIs.")
 
 # -----------------------------------
