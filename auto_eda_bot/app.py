@@ -41,7 +41,7 @@ if uploaded_file is not None:
     df = auto_clean(df)
 
     st.subheader("🧹 Cleaned Dataset Preview")
-    st.dataframe(df.head())
+    st.dataframe(df)
     st.write("Rows after cleaning:", df.shape[0])
     st.write("Columns after cleaning:", df.shape[1])
 
@@ -105,7 +105,7 @@ if uploaded_file is not None:
                 df = apply_outlier_treatment(df, outliers, method="remove")
                 st.success("Outlier rows removed.")
 
-            st.dataframe(df.head())
+            st.dataframe(df)
 
     else:
         st.success("No major outliers detected.")
