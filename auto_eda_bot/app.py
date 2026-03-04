@@ -17,7 +17,7 @@ if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
 
     st.subheader("📄 Original Dataset Preview")
-    st.dataframe(df.head())
+    st.dataframe(df)
 
     
     # Data Cleaning
@@ -25,7 +25,7 @@ if uploaded_file is not None:
     df = auto_clean(df)
 
     st.subheader("🧹 Cleaned Dataset Preview")
-    st.dataframe(df.head())
+    st.dataframe(df)
 
     # -------------------------
     # Smart KPI Detection
