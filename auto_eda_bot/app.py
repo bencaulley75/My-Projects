@@ -1,66 +1,147 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from cleaner import auto_clean
+# from cleaner import auto_clean
 from question_generator import generate_questions
+from cleaner import (
+    auto_clean,
+    detect_problem_columns,
+    detect_outliers,
+    apply_outlier_treatment
+)
 
 st.set_page_config(page_title="Automated Data Analysis", layout="wide")
 
 st.title("📊 Automated Data Analysis")
-st.write("Upload any CSV file and generate automatic insights, KPIs, and visualizations.")
+st.write("Upload any CSV file and generate automatic cleaning insights and KPIs.")
 
-
+# -----------------------------------
 # File Upload
+# -----------------------------------
+
 uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
 
 if uploaded_file is not None:
+
     df = pd.read_csv(uploaded_file)
+
+    # -----------------------------------
+    # Original Dataset Preview
+    # -----------------------------------
 
     st.subheader("📄 Original Dataset Preview")
     st.dataframe(df)
+    st.write("Rows:", df.shape[0])
+    st.write("Columns:", df.shape[1])
 
-    
-    # Data Cleaning
+    # -----------------------------------
+    # Basic Cleaning
+    # -----------------------------------
 
     df = auto_clean(df)
 
     st.subheader("🧹 Cleaned Dataset Preview")
-    st.dataframe(df)
+    st.dataframe(df.head())
+    st.write("Rows after cleaning:", df.shape[0])
+    st.write("Columns after cleaning:", df.shape[1])
 
-    # -------------------------
+    # -----------------------------------
+    # Column Quality Detection
+    # -----------------------------------
+
+    st.subheader("⚠️ Column Quality Detection")
+
+    problem_columns = detect_problem_columns(df)
+
+    all_flagged = (
+        problem_columns["high_missing"]
+        + problem_columns["single_value"]
+        + problem_columns["possible_id"]
+    )
+
+    if len(all_flagged) > 0:
+
+        st.write("Detected Potential Issues:")
+        st.write(problem_columns)
+
+        selected_to_drop = st.multiselect(
+            "Select columns you want to remove:",
+            all_flagged
+        )
+
+        if st.button("Remove Selected Columns"):
+            df = df.drop(columns=selected_to_drop)
+            st.success("Selected columns removed.")
+            st.dataframe(df.head())
+
+    else:
+        st.success("No problematic columns detected.")
+
+    # -----------------------------------
+    # Outlier Detection
+    # -----------------------------------
+
+    st.subheader("📉 Outlier Detection")
+
+    outliers = detect_outliers(df)
+
+    if len(outliers) > 0:
+
+        for col, info in outliers.items():
+            st.write(f"{col}: {info['count']} extreme values detected")
+
+        outlier_action = st.radio(
+            "How would you like to handle outliers?",
+            ["Keep", "Cap (Recommended)", "Remove Rows"]
+        )
+
+        if st.button("Apply Outlier Treatment"):
+
+            if outlier_action == "Cap (Recommended)":
+                df = apply_outlier_treatment(df, outliers, method="cap")
+                st.success("Outliers capped successfully.")
+
+            elif outlier_action == "Remove Rows":
+                df = apply_outlier_treatment(df, outliers, method="remove")
+                st.success("Outlier rows removed.")
+
+            st.dataframe(df.head())
+
+    else:
+        st.success("No major outliers detected.")
+
+    # -----------------------------------
     # Smart KPI Detection
-    # -------------------------
+    # -----------------------------------
 
     st.subheader("📌 Smart KPI Detection")
 
     numeric_cols = df.select_dtypes(include='number').columns
 
     if len(numeric_cols) > 0:
+
         variance_scores = df[numeric_cols].var().sort_values(ascending=False)
         top_kpis = variance_scores.head(3).index
 
-        cols= st.columns(len(top_kpis))
+        cols = st.columns(len(top_kpis))
 
         for i, col in enumerate(top_kpis):
-            total_value = round(df[col].sum(), 2)
-            avg_value = round(df[col].mean(), 2)
-            
+
+            total_value = df[col].sum(skipna=True)
+            avg_value = df[col].mean(skipna=True)
+
             with cols[i]:
                 st.metric(
                     label=f"{col} (Total)",
-                    value= f"{total_value:,.2f}"
+                    value=f"{total_value:,.2f}"
                 )
                 st.metric(
                     label=f"{col} (Average)",
-                    value= f"{avg_value:,.2f}"
+                    value=f"{avg_value:,.2f}"
                 )
 
-            # if i == 0:
-            #     col1.metric(f"Average {col}", avg_value)
-            # elif i == 1:
-            #     col2.metric(f"Average {col}", avg_value)
-            # elif i == 2:
-            #     col3.metric(f"Average {col}", avg_value)
+    else:
+        st.warning("No numeric columns available for KPI generation.")
 
     # -------------------------
     # Generated Business Questions
