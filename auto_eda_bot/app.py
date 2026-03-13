@@ -46,36 +46,27 @@ if uploaded_file is not None:
     st.write("Columns after cleaning:", df.shape[1])
 
     # -----------------------------------
-    # Column Quality Detection
+    # Column Selection for Analysis
     # -----------------------------------
 
-    st.subheader("⚠️ Column Quality Detection")
+    st.subheader("🔍 Select Columns for Analysis")
 
-    problem_columns = detect_problem_columns(df)
+    all_columns = df.columns.tolist()
 
-    all_flagged = (
-        problem_columns["high_missing"]
-        + problem_columns["single_value"]
-        + problem_columns["possible_id"]
+    selected_columns = st.multiselect(
+        "Choose the columns you want to include in your analysis:",
+        options=all_columns,
+        default=all_columns
     )
 
-    if len(all_flagged) > 0:
+    if len(selected_columns) == 0:
+        st.warning("Please select at least one column to continue.")
+        st.stop()
 
-        st.write("Detected Potential Issues:")
-        st.write(problem_columns)
-
-        selected_to_drop = st.multiselect(
-            "Select columns you want to remove:",
-            all_flagged
-        )
-
-        if st.button("Remove Selected Columns"):
-            df = df.drop(columns=selected_to_drop)
-            st.success("Selected columns removed.")
-            st.dataframe(df.head())
-
-    else:
-        st.success("No problematic columns detected.")
+    df = df[selected_columns]
+    st.success(f"{len(selected_columns)} column(s) selected for analysis.")
+    st.dataframe(df.head())
+    
 
     # -----------------------------------
     # Outlier Detection
